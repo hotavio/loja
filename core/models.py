@@ -1,6 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models.fields import IntegerField
+from django.db.models import F
+
+# from django.db.models import query
+# from django.db.models.enums import Choices
+# from django.db.models.fields import IntegerField
 
 
 class Fabricante(models.Model):
@@ -23,30 +27,37 @@ class Produto(models.Model):
     quantidade = models.IntegerField()
     código = models.CharField(max_length=15)
     fabricante = models.ForeignKey(
-        Fabricante, on_delete=models.PROTECT, related_name="Produto")
+        Fabricante, on_delete=models.PROTECT, related_name="Produto"
+    )
     categoria = models.ForeignKey(
-        Categoria, on_delete=models.PROTECT, related_name="Produto")
+        Categoria, on_delete=models.PROTECT, related_name="Produto"
+    )
 
     def __str__(self):
         return "%s (%s)" % (self.nome, self.categoria)
 
 
 class Compra(models.Model):
-
     class StatusCompra(models.IntegerChoices):
-        CARRINHO = 1, 'Carrinho'
-        REALIZADO = 2, 'Realizado'
-        PAGO = 3, 'Pago'
-        ENTREGUE = 4, 'Entrgue'
-    usuatio = models.ForeignKey(
-        User, on_delete=models.PROTECT, related_name="compras")
+        CARRINHO = 1, "Carrinho"
+        REALIZADO = 2, "Realizado"
+        PAGO = 3, "Pago"
+        ENTREGUE = 4, "Entrgue"
+
+    usuatio = models.ForeignKey(User, on_delete=models.PROTECT, related_name="compras")
     status = models.IntegerField(
-        choices=StatusCompra.choices, default=StatusCompra.CARRINHO)
+        choices=StatusCompra.choices, default=StatusCompra.CARRINHO
+    )
+
+    @property
+    def total(self):
+        queryset = self.itens.all().aggregate(
+            total=models.Sum(F("quantidade") * F("produto__preco"))
+        )
+        return queryset["total"]
 
 
 class ItensCompra(models.Model):
-    compra = models.ForeignKey(
-        Compra, on_delete=models.CASCADE, related_name="itens")
-    produto = models.ForeignKey(
-        Produto, on_delete=models.PROTECT, related_name="+")
+    compra = models.ForeignKey(Compra, on_delete=models.CASCADE, related_name="itens")
+    produto = models.ForeignKey(Produto, on_delete=models.PROTECT, related_name="+")
     quantidade = models.IntegerField()

@@ -13,6 +13,8 @@ heroku = "^0.1.4"
 djangorestframework = "^3.12.4"
 
 [tool.poetry.dev-dependencies]
+flake8 = "^4.0.1"
+black = "^21.9b0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
